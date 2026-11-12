@@ -3,7 +3,8 @@ import { firebaseConfig } from './config.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  sendPasswordResetEmail, sendEmailVerification, updateProfile, signOut
+  sendPasswordResetEmail, sendEmailVerification, updateProfile, signOut,
+  GoogleAuthProvider, signInWithPopup
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import {
   initializeFirestore, getFirestore, persistentLocalCache, persistentMultipleTabManager,
@@ -104,6 +105,17 @@ $('f-login').addEventListener('submit', async ev => {
   } catch (e) { criando = false; msg(erroTxt(e), ''); }
   $('l-btn').disabled = false;
 });
+$('l-google').onclick = async () => {
+  const el = $('g-erro'); el.hidden = true;
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (e) {
+    if (e && (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request')) return;
+    el.textContent = e && e.code === 'auth/network-request-failed'
+      ? 'Sem internet. Confira a conexão e tente de novo.'
+      : 'O login com Google não funcionou neste aparelho. Use e-mail e senha abaixo.';
+    el.hidden = false;
+  }
+};
 $('l-esqueci').onclick = async () => {
   const email = $('l-email').value.trim();
   if (!email) return msg('Digite o seu e-mail acima e toque de novo em "Esqueci minha senha".', '');
