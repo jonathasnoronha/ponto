@@ -82,7 +82,7 @@ const ERROS = {
   'auth/network-request-failed': 'Sem internet. Confira a conexão e tente de novo.',
   'auth/too-many-requests': 'Muitas tentativas. Espere alguns minutos e tente de novo.'
 };
-const erroTxt = e => ERROS[e && e.code] || 'Não deu certo. Tente de novo.';
+const erroTxt = e => ERROS[e && e.code] || ('Não deu certo (' + ((e && e.code) || 'erro') + '). Tente de novo.');
 
 $('m-entrar').onclick = () => setModo(false);
 $('m-criar').onclick = () => setModo(true);
@@ -112,7 +112,7 @@ $('l-google').onclick = async () => {
     if (e && (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request')) return;
     el.textContent = e && e.code === 'auth/network-request-failed'
       ? 'Sem internet. Confira a conexão e tente de novo.'
-      : 'O login com Google não funcionou neste aparelho. Use e-mail e senha abaixo.';
+      : 'O login com Google não funcionou neste aparelho (' + ((e && e.code) || 'erro') + '). Use e-mail e senha abaixo.';
     el.hidden = false;
   }
 };
