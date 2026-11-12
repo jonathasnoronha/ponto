@@ -470,7 +470,7 @@ function renderAjustes(){
     <button class="btn danger" data-act="wipe">${delArm?'Toque de novo para apagar tudo':'Apagar todos os registros'}</button>
   </div>
   <div class="card stack"><span class="eyebrow">Conta</span>
-    <span class="small">Conectada como <b>${esc(ctx.email)}</b></span>
+    <span class="small">Você entrou como <b>${esc(ctx.email)}</b></span>
     ${ctx.adminHtml||''}
     <button class="btn" data-act="sair">Sair da conta</button>
   </div>
