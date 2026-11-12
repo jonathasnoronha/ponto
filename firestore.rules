@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Administrador: vê e corrige os registros de todas as contas (precisa ter confirmado o e-mail).
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in ['jnoronha.eng@gmail.com'];
+    }
+    function isDono(uid) { return request.auth != null && request.auth.uid == uid; }
+
+    match /usuarios/{uid} {
+      allow read, write: if isDono(uid) || isAdmin();
+      match /{doc=**} {
+        allow read, write: if isDono(uid) || isAdmin();
+      }
+    }
+  }
+}
