@@ -1,5 +1,5 @@
 // Guarda os arquivos do app para abrir mesmo com internet ruim. Sempre tenta a versão nova primeiro.
-const CACHE = 'ponto-v3';
+const CACHE = 'ponto-v4';
 const ARQ = ['./', 'index.html', 'app.js', 'firebase.js', 'config.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ARQ)).catch(() => {})); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });

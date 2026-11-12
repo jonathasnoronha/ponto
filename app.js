@@ -240,7 +240,7 @@ function abrirTexto(txt){
 }
 function bannerExemplo(){ return S.exemplo?`<div class="banner"><span class="small"><b>Estes horários são um exemplo</b> para mostrar como funciona.</span><button class="btn primary" data-act="real">Começar a usar</button></div>`:''; }
 function header(){
-  document.getElementById('hdr-nome').textContent=S.config.nome?(' da '+S.config.nome.split(' ')[0]):'';
+  document.getElementById('hdr-nome').textContent=S.config.nome?(' de '+S.config.nome.split(' ')[0]):'';
   const tot=S.config.prev.reduce((a,b)=>a+b,0);
   document.getElementById('hdr-sub').textContent='Jornada '+fmt(tot)+'/sem';
 }
