@@ -385,23 +385,47 @@ document.getElementById('ed-body').addEventListener('click',e=>{
 });
 
 /* ---------- RESUMO ---------- */
-function relatorio(){
-  const mi=mesInfo(vy,vm), t=mi.t, $=dinheiro(t);
-  const L=[`*Ponto ${MES[vm]}/${vy}*${S.config.nome?' – '+S.config.nome:''}`,
-  `Trabalhadas: ${fmt(t.trab)}`,`Previstas: ${fmt(t.prev)}`,`Extras 50%: ${fmt(t.he50)}`,`Extras 100%: ${fmt(t.he100)}`,`Débito: ${fmt(t.deb)}`,`Saldo: ${fmt(t.saldo,true)}`];
-  if($) L.push(`Estimativa extras: ${brl($.he50+$.he100)} · descontos: ${brl($.deb)}`);
-  L.push('','*Semanas*'); mi.semanas.forEach(s=>L.push(`${ddmm(s.ini)}–${ddmm(s.fim)}: ${fmt(s.t.trab)} (saldo ${fmt(s.t.saldo,true)})`));
-  L.push('','*Dias*');
+/* Relatório para o chefe: só os dias com hora extra, a quantidade e o tipo. */
+function relatorioChefe(){
+  const mi=mesInfo(vy,vm), t=mi.t;
+  const nome=S.config.nome?S.config.nome.trim():'';
+  const L=[`*Horas extras – ${MES[vm]}/${vy}*`]; if(nome) L.push(nome); L.push('');
+  let n=0;
+  mi.dias.forEach(r=>{
+    if(!r.conta) return;
+    const fer=r.tipo==='feriado'?` – Feriado: ${r.fer||'feriado'}`:(r.wd===0&&r.he100?' – Domingo':'');
+    if(r.he50){ L.push(`${ddmm(r.x)} (${DOW[r.wd].toLowerCase()}) – ${fmt(r.he50)} extra ${S.config.pctHE}%${fer}`); n++; }
+    if(r.he100){ L.push(`${ddmm(r.x)} (${DOW[r.wd].toLowerCase()}) – ${fmt(r.he100)} extra ${S.config.pctDF}%${fer}`); n++; }
+  });
+  if(!n) L.push('Nenhuma hora extra no mês.');
+  else {
+    L.push('');
+    const tot=[]; if(t.he50) tot.push(`${fmt(t.he50)} a ${S.config.pctHE}%`); if(t.he100) tot.push(`${fmt(t.he100)} a ${S.config.pctDF}%`);
+    L.push(`*Total:* ${tot.join(' + ')}`);
+  }
+  return L.join('\n');
+}
+/* Relatório completo: para conferência, sem valores em dinheiro. */
+function relatorioCompleto(){
+  const mi=mesInfo(vy,vm), t=mi.t;
+  const nome=S.config.nome?S.config.nome.trim():'';
+  const L=[`*Ponto – ${MES[vm]}/${vy}*${nome?' – '+nome:''}`,
+    `Trabalhadas: ${fmt(t.trab)} (previstas ${fmt(t.prev)})`,
+    `Extras ${S.config.pctHE}%: ${fmt(t.he50)} · Extras ${S.config.pctDF}%: ${fmt(t.he100)}`,
+    `Débito: ${fmt(t.deb)} · Saldo: ${fmt(t.saldo,true)}`,'','*Dias*'];
   mi.dias.forEach(r=>{
     if(r.status==='futuro'||r.status==='antes'||(r.status==='descanso'&&!r.obs)) return;
-    let s=`${ddmm(r.x)} ${DOW[r.wd]} `;
-    const mk=r.m.filter(Boolean).join(' ');
-    if(r.tipo!=='normal') s+=`[${r.tipo==='feriado'&&r.fer?r.fer:TIPOS[r.tipo]}] `;
-    if(mk) s+=mk+' = '+fmt(r.trab||r.p.tot); else if(r.status==='vazio') s+='sem registro';
-    if(r.saldo) s+=` (${fmt(r.saldo,true)})`;
-    if(r.status==='incompleto') s+=' ⚠ falta marcação';
-    if(r.obs) s+=' – '+r.obs;
-    L.push(s.trim());
+    const parts=[`${ddmm(r.x)} ${DOW[r.wd].toLowerCase()}`];
+    if(r.tipo!=='normal') parts.push(r.tipo==='feriado'&&r.fer?'Feriado: '+r.fer:TIPOS[r.tipo]);
+    const m=r.m;
+    const p1=(m[0]||m[1])?`${m[0]||'--:--'}–${m[1]||'--:--'}`:'', p2=(m[2]||m[3])?`${m[2]||'--:--'}–${m[3]||'--:--'}`:'';
+    if(p1||p2) parts.push([p1,p2].filter(Boolean).join(' / ')+(p1&&!p2&&r.trab>360?' (sem almoço)':''));
+    if(r.status==='vazio') parts.push('sem registro');
+    else if(r.status==='incompleto') parts.push('falta marcação');
+    else if(r.trab) parts.push(fmt(r.trab));
+    if(r.saldo) parts.push(fmt(r.saldo,true));
+    if(r.obs) parts.push(r.obs);
+    L.push(parts.join(' · '));
   });
   return L.join('\n');
 }
@@ -432,8 +456,13 @@ function renderResumo(){
     <tr><td><b>Líquido estimado</b></td><td><b>${brl($.liq)}</b></td></tr></tbody></table></div>
     <span class="small muted">Sem DSR, adicional noturno ou impostos. Serve para conferir o holerite.</span></div>`
   :`<div class="card small muted">Informe o salário em Ajustes para ver quanto as horas extras valem em reais.</div>`}
-  <button class="btn primary wide" data-act="copy-rel">Copiar relatório do mês</button>
-  <p class="small muted" style="margin:0">O relatório vai pronto para colar no WhatsApp ou mandar para o RH.</p>`;
+  <div class="card stack"><span class="eyebrow">Relatório para o chefe</span>
+    <pre class="rel-prev">${esc(relatorioChefe())}</pre>
+    <button class="btn primary wide" data-act="copy-chefe">Copiar relatório para o chefe</button>
+    <span class="small muted">Só os dias com hora extra, a quantidade e o tipo. Pronto para colar no WhatsApp.</span>
+  </div>
+  <button class="btn wide" data-act="copy-rel">Copiar relatório completo</button>
+  <p class="small muted" style="margin:0">O completo traz os horários de todos os dias, para conferência. Valores em dinheiro ficam só no app.</p>`;
 }
 
 /* ---------- AJUSTES ---------- */
@@ -507,7 +536,8 @@ document.getElementById('app').addEventListener('click',e=>{
   }
   if(a==='prev'){ vm--; if(vm<0){vm=11;vy--;} render(); }
   if(a==='next'){ vm++; if(vm>11){vm=0;vy++;} render(); }
-  if(a==='copy-rel') copiar(relatorio(),'Relatório copiado');
+  if(a==='copy-chefe') copiar(relatorioChefe(),'Relatório para o chefe copiado');
+  if(a==='copy-rel') copiar(relatorioCompleto(),'Relatório completo copiado');
   if(a==='backup') copiar(JSON.stringify({app:'ponto-jessika',v:1,config:S.config,dias:S.dias}),'Backup copiado');
   if(a==='restore'){
     const txt=document.getElementById('rest-txt').value.trim();
